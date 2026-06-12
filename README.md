@@ -38,6 +38,3 @@ Static front-end + one serverless function — deploys on Vercel with zero confi
 
 ## License
 MIT
-# abuseip
-# abuseip
-# abuseip
