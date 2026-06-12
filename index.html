@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbuseIPDB Intelligence Scanner</title>
+<style>
+  :root{
+    --bg:#0a0e14;--bg2:#0f141c;--panel:#141a23;--panel2:#1a212c;--hover:#1f2733;
+    --border:#262f3d;--border2:#323d4d;--txt:#e7edf5;--txt2:#aab4c2;--muted:#6b7686;
+    --accent:#4d9fff;--accent2:#7c5cff;--green:#3fb950;--yellow:#e3b341;--orange:#f0883e;--red:#f85149;
+    --r:14px;--shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1200px 600px at 80% -10%,rgba(124,92,255,.10),transparent 60%),
+      radial-gradient(1000px 500px at -10% 0%,rgba(77,159,255,.10),transparent 55%),var(--bg);
+    color:var(--txt);font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  header{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(10,14,20,.78);
+    border-bottom:1px solid var(--border);padding:14px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:800;color:#fff;font-size:16px;box-shadow:0 4px 14px rgba(77,159,255,.4)}
+  .ttl{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .ttl small{display:block;font-size:11px;color:var(--muted);font-weight:500}
+  .spacer{flex:1}
+  .btn{background:var(--panel2);border:1px solid var(--border2);color:var(--txt);padding:9px 14px;border-radius:10px;
+    cursor:pointer;font-size:13px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:var(--hover);border-color:var(--accent);transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:#fff;box-shadow:0 4px 14px rgba(77,159,255,.35)}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  input[type=file]{display:none}
+  .wrap{padding:24px 26px;max-width:1480px;margin:0 auto}
+
+  /* setup form */
+  .setup{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.setup{grid-template-columns:1fr}}
+  .field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin-bottom:7px}
+  .field .hint{color:var(--muted);font-size:12px;margin-top:6px}
+  textarea,input[type=text],input[type=number],select{width:100%;background:var(--panel);border:1px solid var(--border2);color:var(--txt);
+    padding:11px 13px;border-radius:11px;font-size:13.5px;outline:none;transition:.15s;font-family:inherit}
+  textarea{resize:vertical;min-height:120px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;line-height:1.6}
+  textarea:focus,input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(77,159,255,.15)}
+  .opts{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .opts .o{flex:1;min-width:120px}
+  .runbar{display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+  .note{background:rgba(77,159,255,.08);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:9px;
+    padding:11px 14px;font-size:12.5px;color:var(--txt2);margin-top:14px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+  .panel .ph{padding:13px 18px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--txt2);
+    border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+  .panel .ph .r{margin-left:auto;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0}
+  .panel .pb{padding:16px 18px}
+
+  /* progress */
+  .prog .bar{height:12px;background:var(--panel2);border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+  .prog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .2s}
+  .prog .stat{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0;font-size:13px}
+  .prog .stat b{font-size:20px;display:block}
+  .prog .log{max-height:200px;overflow:auto;font-family:Consolas,monospace;font-size:12px;background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;margin-top:8px}
+  .prog .log div{padding:1px 0}
+
+  /* verdict + cards + dash (shared) */
+  .verdict{display:flex;align-items:center;gap:16px;padding:18px 22px;border-radius:var(--r);margin-bottom:18px;border:1px solid var(--border2);
+    background:var(--panel);box-shadow:var(--shadow);border-left-width:5px;animation:rise .4s ease}
+  .verdict .vic{font-size:30px} .verdict .vt{font-size:17px;font-weight:700} .verdict .vs{color:var(--txt2);font-size:13px;margin-top:2px}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden;transition:.18s}
+  .card:hover{border-color:var(--border2);transform:translateY(-2px)}
+  .card .n{font-size:30px;font-weight:800;letter-spacing:-.02em} .card .l{color:var(--muted);font-size:11.5px;margin-top:7px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .card .spark{position:absolute;right:14px;top:14px;font-size:18px;opacity:.5}
+  .card.c-blue .n{color:var(--accent)} .card.c-red .n{color:var(--red)} .card.c-orange .n{color:var(--orange)} .card.c-yellow .n{color:var(--yellow)} .card.c-green .n{color:var(--green)}
+  .card.clickable{cursor:pointer} .card.clickable:hover{border-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .search{position:relative;flex:1;min-width:200px}
+  .search input{padding-left:36px} .search .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:var(--panel);border:1px solid var(--border2);color:var(--txt2);padding:7px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .chip:hover{border-color:var(--accent);color:var(--txt)} .chip.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
+  .chip .dot{width:8px;height:8px;border-radius:50%}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--panel2);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;z-index:2}
+  th:hover{color:var(--txt)} th .ar{opacity:.5;font-size:10px;margin-left:3px}
+  tbody tr{transition:.1s;border-left:3px solid transparent} tbody tr:hover{background:var(--hover)}
+  tbody tr.r-red{border-left-color:var(--red)} tbody tr.r-orange{border-left-color:var(--orange)} tbody tr.r-yellow{border-left-color:var(--yellow)}
+  td.ip{font-family:Consolas,monospace;cursor:pointer} td.ip:hover{color:var(--accent)}
+  td.isp{max-width:260px;overflow:hidden;text-overflow:ellipsis;color:var(--txt2)}
+  .tablewrap{max-height:60vh;overflow:auto}
+  .badge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:4px 9px;border-radius:8px;font-weight:800;font-size:12px;color:#fff}
+  .b-green{background:var(--green)} .b-yellow{background:var(--yellow);color:#3a2e00} .b-orange{background:var(--orange)} .b-red{background:var(--red)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .insight{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start} .insight:last-child{border:0} .insight .ii{font-size:15px} .insight b{color:var(--txt)}
+  .pie-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center}
+  .pie-svg path,.pie-svg circle{cursor:pointer;transition:.15s} .pie-svg path:hover{filter:brightness(1.15)}
+  .pie-total{font-size:26px;font-weight:800;fill:var(--txt)} .pie-center{font-size:12px;fill:var(--muted)}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:13px;min-width:140px}
+  .legend .li{display:flex;align-items:center;gap:9px;cursor:pointer;padding:3px 5px;border-radius:7px} .legend .li:hover{background:var(--hover)}
+  .legend .dot{width:11px;height:11px;border-radius:4px} .legend .lt{flex:1;color:var(--txt2)} .legend .ln{color:var(--muted);font-size:12px}
+  .bar-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:12px}
+  .bar-row .lab{width:48px;color:var(--muted)} .bar-row .track{flex:1;background:var(--panel2);border-radius:6px;height:18px;overflow:hidden}
+  .bar-row .fill{height:100%;border-radius:6px;transition:width .5s} .bar-row .val{width:42px;text-align:right;color:var(--txt2)}
+  .country-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px} .country-row:last-child{border:0}
+  .country-row .fl{font-family:Consolas,monospace;color:var(--accent);font-weight:700;font-size:12px;background:var(--panel2);border:1px solid var(--border);padding:2px 7px;border-radius:6px}
+  .country-row .cb{width:70px;height:6px;background:var(--panel2);border-radius:4px;overflow:hidden} .country-row .cb i{display:block;height:100%;background:var(--accent)}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:40;opacity:0;pointer-events:none;transition:.2s} .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,92vw);background:var(--bg2);border-left:1px solid var(--border2);z-index:50;transform:translateX(100%);transition:transform .28s;overflow-y:auto;box-shadow:-12px 0 40px rgba(0,0,0,.5)} .drawer.open{transform:none}
+  .drawer .dh{position:sticky;top:0;background:var(--bg2);padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .drawer .db{padding:8px 22px 40px} .drawer h3{font-size:13.5px;margin:20px 0 8px;color:var(--accent)} .drawer ul{margin:6px 0;padding-left:20px;line-height:1.7;color:var(--txt2)}
+  .drawer code{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-family:Consolas,monospace;font-size:12px}
+  .drawer .step{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:8px 0} .drawer .sn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:12px;font-weight:800;margin-right:8px}
+  .scale .row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt2);margin:6px 0}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--border2);color:var(--txt);padding:11px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60} .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none!important} .muted{color:var(--muted)}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">A</div>
+  <div class="ttl">AbuseIPDB Intelligence Scanner <small>scan in your browser &middot; keys never stored</small></div>
+  <div class="spacer"></div>
+  <button class="btn" id="helpBtn">&#9432; How to use</button>
+  <button class="btn hidden" id="newScanBtn">&#8635; New scan</button>
+  <button class="btn hidden" id="exportBtn">&#8681; Export</button>
+  <label class="btn" for="file">&#8682; Load CSV</label>
+  <input type="file" id="file" accept=".csv">
+</header>
+
+<div class="wrap">
+  <!-- SETUP -->
+  <div id="setup">
+    <div class="panel"><div class="ph">New scan</div><div class="pb">
+      <div class="setup">
+        <div class="field">
+          <label>IP addresses / ranges</label>
+          <textarea id="ranges" placeholder="One per line:&#10;103.135.216.0/22&#10;45.155.205.233&#10;8.8.8.8"></textarea>
+          <div class="hint">Single IPs or CIDR ranges. CIDRs expand to usable hosts (e.g. /24 = 254, /22 = 1022).</div>
+        </div>
+        <div class="field">
+          <label>AbuseIPDB API keys</label>
+          <textarea id="keys" placeholder="One key per line. More keys = faster + higher daily limit.&#10;(each free key = 1000 checks/day)"></textarea>
+          <div class="hint">Get free keys at abuseipdb.com/account/api. Keys are sent only to this site's proxy and never stored.</div>
+        </div>
+      </div>
+      <div class="opts">
+        <div class="o field"><label>Report age (days)</label>
+          <select id="maxAge"><option>30</option><option selected>90</option><option>180</option><option>365</option></select></div>
+        <div class="o field"><label>Min score to keep</label><input type="number" id="minScore" value="0" min="0" max="100"></div>
+        <div class="o field"><label>Parallel requests</label><input type="number" id="conc" value="6" min="1" max="20"></div>
+        <div class="o field"><label>Max IPs (safety cap)</label><input type="number" id="maxIps" value="2000" min="1"></div>
+      </div>
+      <div class="runbar">
+        <button class="btn primary" id="runBtn">&#9655; Run scan</button>
+        <span class="muted" id="estimate"></span>
+      </div>
+      <div class="note">&#128274; This runs entirely against <b>your own</b> API keys through this site's proxy function. Keys and results are processed in memory only &mdash; nothing is saved server-side. On the free tier each key allows 1000 checks/day.</div>
+    </div></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="progress" class="hidden">
+    <div class="panel prog"><div class="ph">Scanning... <span class="r" id="progPct">0%</span></div><div class="pb">
+      <div class="bar"><i id="progFill"></i></div>
+      <div class="stat">
+        <div><b id="sDone">0</b><span class="muted">checked</span></div>
+        <div><b id="sTotal">0</b><span class="muted">total</span></div>
+        <div><b id="sReported" style="color:var(--orange)">0</b><span class="muted">reported</span></div>
+        <div><b id="sErr" style="color:var(--red)">0</b><span class="muted">errors</span></div>
+      </div>
+      <div class="runbar"><button class="btn" id="cancelBtn">&#9632; Stop</button><span class="muted" id="progMsg"></span></div>
+      <div class="log" id="progLog"></div>
+    </div></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" class="hidden">
+    <div id="verdict" class="verdict"></div>
+    <div class="cards" id="cards"></div>
+    <div class="toolbar">
+      <div class="search"><span class="si">&#128269;</span><input type="text" id="search" placeholder="Search IP, ISP, or country..."></div>
+      <div class="chips" id="chips"></div>
+      <select id="countrySel" style="width:auto"><option value="">All countries</option></select>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <div class="ph">IP Results <span class="r" id="count"></span></div>
+        <div class="tablewrap"><table id="tbl"><thead><tr>
+          <th data-k="IP">IP <span class="ar"></span></th><th data-k="AbuseScore">Score <span class="ar">&#9660;</span></th>
+          <th data-k="Reports">Reports <span class="ar"></span></th><th data-k="Country">Country <span class="ar"></span></th>
+          <th data-k="ISP">ISP <span class="ar"></span></th><th data-k="LastReported">Last reported <span class="ar"></span></th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:18px"><div class="ph">&#128161; Smart insights</div><div class="pb" id="insights"></div></div>
+        <div class="panel" style="margin-bottom:18px"><div class="ph">Risk breakdown</div><div class="pb"><div class="pie-wrap"><div id="pie" class="pie-svg"></div><div id="pieLegend" class="legend"></div></div></div></div>
+        <div class="panel" style="margin-bottom:18px"><div class="ph">Score distribution</div><div class="pb" id="dist"></div></div>
+        <div class="panel"><div class="ph">Top countries</div><div class="pb" id="countries"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>AbuseIPDB Intelligence Scanner &middot; client-side scanning via a serverless proxy &middot; keys never stored<br><span style="opacity:.85">Powered by <b style="color:var(--accent)">Min Htaw Lwe</b></span></footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dh"><div class="logo" style="width:28px;height:28px;font-size:13px">?</div><h2 style="margin:0;font-size:16px">How to use</h2><div class="spacer"></div><button class="btn" id="drawerClose">Close</button></div>
+  <div class="db">
+    <p style="color:var(--txt2)">Scan IP addresses or whole ranges against <b>AbuseIPDB</b> right here in your browser, then explore the results with charts and insights.</p>
+    <h3>&#128640; Run a scan</h3>
+    <div class="step"><span class="sn">1</span>Paste IPs or CIDR ranges (one per line) in the left box. CIDRs auto-expand to hosts.</div>
+    <div class="step"><span class="sn">2</span>Paste one or more <b>AbuseIPDB API keys</b> (one per line). More keys = faster + higher daily limit (1000/key/day).</div>
+    <div class="step"><span class="sn">3</span>Click <b>Run scan</b>. Watch live progress, then the dashboard appears automatically.</div>
+    <h3>&#127919; Score colours (0&ndash;100)</h3>
+    <div class="scale">
+      <div class="row"><span class="badge b-green">0</span> Clean</div>
+      <div class="row"><span class="badge b-yellow">1-24</span> Low / noise</div>
+      <div class="row"><span class="badge b-orange">25-74</span> Suspicious</div>
+      <div class="row"><span class="badge b-red">75-100</span> Malicious</div>
+    </div>
+    <h3>&#129504; In the results</h3>
+    <ul><li>Verdict banner + auto insights summarise the whole scan.</li>
+      <li>Click a stat card, pie slice, or filter chip to filter.</li>
+      <li>Click an IP to copy it. Click column headers to sort.</li>
+      <li><b>Export</b> saves the filtered rows as CSV.</li>
+      <li><b>Load CSV</b> opens a previously exported/scanned file instead of scanning.</li></ul>
+    <h3>&#128274; Privacy</h3>
+    <ul><li>Your keys go only to this site's proxy &rarr; AbuseIPDB. They are never stored or logged.</li>
+      <li>Use your own keys; each free key allows 1000 checks/day.</li></ul>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+let DATA=[],sortKey='AbuseScore',sortDir=-1,riskMin=0,CANCEL=false;
+const $=id=>document.getElementById(id);
+const sClass=s=>{s=+s;return s>=75?'b-red':s>=25?'b-orange':s>0?'b-yellow':'b-green';};
+const rClass=s=>{s=+s;return s>=75?'r-red':s>=25?'r-orange':s>0?'r-yellow':'';};
+const fColor=s=>s>=75?'var(--red)':s>=25?'var(--orange)':s>0?'var(--yellow)':'var(--green)';
+
+/* ---------- IP / CIDR helpers ---------- */
+function isIPv4(ip){const p=ip.split('.');if(p.length!==4)return false;return p.every(o=>/^\d+$/.test(o)&&+o>=0&&+o<=255);}
+function ipToInt(ip){return ip.split('.').reduce((a,o)=>(a*256+ +o)>>>0,0);}
+function intToIp(n){return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');}
+function cidrUsableCount(pfx){if(pfx>=31)return pfx===32?1:2;return Math.pow(2,32-pfx)-2;}
+// Cheap count WITHOUT building any array (used for the live estimate while typing).
+function targetCount(text){let n=0;const bad=[];
+  text.split(/\r?\n/).forEach(line=>{const l=line.trim();if(!l||l.startsWith('#'))return;
+    if(l.includes('/')){const i=l.indexOf('/'),b=l.slice(0,i),p=l.slice(i+1);const pfx=+p;
+      if(isIPv4(b)&&p!==''&&/^\d+$/.test(p)&&pfx>=0&&pfx<=32)n+=cidrUsableCount(pfx);else bad.push(l);}
+    else if(isIPv4(l))n++;else bad.push(l);});
+  return {count:n,bad};}
+// Expand a CIDR to usable host IPs, but never build more than `cap` (prevents freezes on tiny prefixes).
+function expandCidr(cidr,cap){cap=cap||100000;
+  const i=cidr.indexOf('/'),base=cidr.slice(0,i),pfxS=cidr.slice(i+1);const pfx=+pfxS;
+  if(!isIPv4(base)||pfxS===''||!/^\d+$/.test(pfxS)||pfx<0||pfx>32)return [];
+  const ipInt=ipToInt(base);const mask=pfx===0?0:(0xFFFFFFFF<<(32-pfx))>>>0;const net=(ipInt&mask)>>>0;
+  const total=Math.pow(2,32-pfx);
+  let start,end;if(pfx<=30){start=net+1;end=net+total-2;}else{start=net;end=net+total-1;}
+  const out=[];for(let c=start;c<=end&&out.length<cap;c++)out.push(intToIp(c>>>0));return out;
+}
+function parseTargets(text,cap){cap=cap||100000;const out=[];const bad=[];
+  const lines=text.split(/\r?\n/);
+  for(const line of lines){const l=line.trim();if(!l||l.startsWith('#'))continue;
+    if(l.includes('/')){const e=expandCidr(l,cap-out.length);if(e.length)out.push(...e);else bad.push(l);}
+    else if(isIPv4(l))out.push(l);else bad.push(l);
+    if(out.length>=cap)break;}
+  return {ips:[...new Set(out)],bad};
+}
+
+/* ---------- the scan ---------- */
+async function runScan(){
+  const maxAge=+$('maxAge').value, minScore=+$('minScore').value, conc=Math.max(1,+$('conc').value||6), maxIps=+$('maxIps').value||2000;
+  const {count:wanted}=targetCount($('ranges').value);
+  const {ips,bad}=parseTargets($('ranges').value, maxIps);
+  const keys=$('keys').value.split(/\r?\n/).map(k=>k.trim()).filter(k=>k&&!k.startsWith('#'));
+  if(!ips.length){toast('Enter at least one valid IP or range');return;}
+  if(!keys.length){toast('Enter at least one API key');return;}
+  let list=ips;
+  if(wanted>list.length){toast(`Capped to ${list.length.toLocaleString()} of ${wanted.toLocaleString()} IPs (raise "Max IPs")`);}
+  if(bad.length)log(`Skipped ${bad.length} invalid entr${bad.length>1?'ies':'y'}: ${bad.slice(0,5).join(', ')}`);
+
+  DATA=[];CANCEL=false;
+  $('setup').classList.add('hidden');$('dash').classList.add('hidden');$('progress').classList.remove('hidden');
+  $('newScanBtn').classList.add('hidden');$('exportBtn').classList.add('hidden');
+  $('progLog').innerHTML='';
+  const total=list.length;$('sTotal').textContent=total;$('sDone').textContent='0';$('sReported').textContent='0';$('sErr').textContent='0';
+  setProg(0);log(`Scanning ${total} IP(s) with ${keys.length} key(s), ${conc} parallel...`);
+
+  let done=0,reported=0,errors=0,idx=0;
+  const exhausted=new Set();let abort=false;        // keys that hit their daily limit
+  async function worker(){
+    while(idx<list.length && !CANCEL && !abort){
+      const myIdx=idx++;const ip=list[myIdx];
+      let ok=false,attempts=0;
+      while(attempts<4 && !CANCEL && !abort){
+        attempts++;
+        // pick a key that still has quota (round-robin, skip exhausted)
+        let key=null;for(let t=0;t<keys.length;t++){const c=keys[(myIdx+t)%keys.length];if(!exhausted.has(c)){key=c;break;}}
+        if(!key){abort=true;break;}
+        try{
+          const resp=await fetch('/api/check',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ip,key,maxAge})});
+          if(resp.status===429){
+            const j=await resp.json().catch(()=>null);
+            const det=(j&&j.errors&&j.errors[0]&&j.errors[0].detail)||'';
+            if(/daily|exceeded/i.test(det)||keys.length===1){           // daily quota gone for this key
+              if(!exhausted.has(key)){exhausted.add(key);log(`Key *${key.slice(-4)} is out of daily quota (${exhausted.size}/${keys.length} keys used up).`);}
+              continue;                                                  // try another key (or abort if none)
+            }
+            await sleep(2500);continue;                                  // short burst limit -> brief wait
+          }
+          const j=await resp.json();
+          if(resp.ok && j && j.data){
+            const d=j.data;
+            if(d.abuseConfidenceScore>=minScore){
+              DATA.push({IP:d.ipAddress,AbuseScore:+d.abuseConfidenceScore,Reports:+d.totalReports,Country:d.countryCode||'',ISP:d.isp||'',LastReported:d.lastReportedAt||''});
+              if(d.abuseConfidenceScore>0){reported++;$('sReported').textContent=reported;}
+              if(d.abuseConfidenceScore>=25)log(`${d.ipAddress}  score=${d.abuseConfidenceScore}  ${d.countryCode||''}`);
+            }
+            ok=true;break;
+          } else {
+            const det=(j&&j.errors&&j.errors[0]&&j.errors[0].detail)||('HTTP '+resp.status);
+            log(`${ip}: ${det}`);ok=true;break;                          // non-429 error: record, move on
+          }
+        }catch(e){await sleep(800);}                                     // network hiccup -> retry within cap
+      }
+      if(!ok && !abort){errors++;$('sErr').textContent=errors;}
+      done++;$('sDone').textContent=done;setProg(done/total*100);
+    }
+  }
+  const pool=[];for(let w=0;w<conc;w++)pool.push(worker());
+  await Promise.all(pool);
+  if(abort)log('STOPPED: all keys are out of their daily quota (1000/key/day, resets at midnight UTC). Add fresh keys or try tomorrow.');
+  log(CANCEL?`Stopped at ${done}/${total}.`:`Done. ${done} processed, ${DATA.length} kept, ${reported} reported, ${errors} errors.`);
+  if(abort)toast('All keys hit their daily limit');
+  finishScan();
+}
+function setProg(p){p=Math.min(100,p);$('progFill').style.width=p+'%';$('progPct').textContent=Math.round(p)+'%';}
+function log(m){const d=document.createElement('div');d.textContent=m;$('progLog').appendChild(d);$('progLog').scrollTop=$('progLog').scrollHeight;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function finishScan(){
+  $('progress').classList.add('hidden');
+  if(!DATA.length){toast('No results to show');$('setup').classList.remove('hidden');return;}
+  showDash();
+}
+function showDash(){
+  $('setup').classList.add('hidden');$('progress').classList.add('hidden');$('dash').classList.remove('hidden');
+  $('newScanBtn').classList.remove('hidden');$('exportBtn').classList.remove('hidden');
+  buildChips();buildCountrySelect();render();closeDrawer();
+}
+
+/* ---------- CSV load (optional) ---------- */
+function parseCSV(text){const rows=[];let i=0,f='',row=[],q=false;text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  while(i<text.length){const c=text[i];if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else{if(c==='"')q=true;else if(c===','){row.push(f);f='';}else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}else f+=c;}i++;}
+  if(f.length||row.length){row.push(f);rows.push(row);}if(!rows.length)return[];
+  const head=rows.shift().map(h=>h.trim());
+  return rows.filter(r=>r.length>1||(r.length===1&&r[0]!=='')).map(r=>{const o={};head.forEach((h,x)=>o[h]=(r[x]??'').trim());return o;});}
+function loadCSV(rows){DATA=rows.map(r=>({IP:r.IP||r.ip||'',AbuseScore:+(r.AbuseScore||0),Reports:+(r.Reports||0),Country:r.Country||'',ISP:r.ISP||'',LastReported:r.LastReported||''})).filter(r=>r.IP);showDash();}
+
+/* ---------- dashboard render ---------- */
+function buildChips(){const defs=[['All',0,'var(--accent)'],['Reported &ge;1',1,'var(--yellow)'],['Suspicious &ge;25',25,'var(--orange)'],['Malicious &ge;75',75,'var(--red)']];
+  $('chips').innerHTML=defs.map(([l,v,c])=>`<span class="chip ${v===riskMin?'active':''}" data-v="${v}"><span class="dot" style="background:${c}"></span>${l}</span>`).join('');
+  document.querySelectorAll('#chips .chip').forEach(ch=>ch.addEventListener('click',()=>{riskMin=+ch.dataset.v;$('search').value='';render();}));}
+function buildCountrySelect(){const cs=[...new Set(DATA.map(d=>d.Country).filter(Boolean))].sort();
+  $('countrySel').innerHTML='<option value="">All countries</option>'+cs.map(c=>`<option>${c}</option>`).join('');}
+function filtered(){const qq=$('search').value.toLowerCase().trim(),ctry=$('countrySel').value;
+  return DATA.filter(d=>{if(d.AbuseScore<riskMin)return false;if(ctry&&d.Country!==ctry)return false;
+    if(qq&&!(`${d.IP} ${d.ISP} ${d.Country}`.toLowerCase().includes(qq)))return false;return true;});}
+function animateN(el,to){let st=null;function f(t){if(!st)st=t;const p=Math.min((t-st)/550,1);el.textContent=Math.round((1-Math.pow(1-p,3))*to);if(p<1)requestAnimationFrame(f);}requestAnimationFrame(f);}
+function render(){
+  const total=DATA.length,clean=DATA.filter(d=>d.AbuseScore===0).length,reported=DATA.filter(d=>d.AbuseScore>0).length;
+  const susp=DATA.filter(d=>d.AbuseScore>=25).length,mal=DATA.filter(d=>d.AbuseScore>=75).length,ctys=new Set(DATA.map(d=>d.Country).filter(Boolean)).size;
+  let vi,vt,vs,vc;
+  if(mal>0){vi='&#128680;';vt=`${mal} malicious IP${mal>1?'s':''} found`;vs='High-confidence abusive addresses present. Review / block them.';vc='var(--red)';}
+  else if(susp>0){vi='&#9888;&#65039;';vt=`${susp} suspicious IP${susp>1?'s':''} to review`;vs='No confirmed-malicious IPs, but some have a notable score.';vc='var(--orange)';}
+  else if(reported>0){vi='&#128075;';vt='Low-level reports only';vs=`${reported} address(es) with minor reports (score under 25).`;vc='var(--yellow)';}
+  else{vi='&#9989;';vt='All clean';vs='None of the scanned IPs have abuse reports.';vc='var(--green)';}
+  $('verdict').style.borderLeftColor=vc;
+  $('verdict').innerHTML=`<div class="vic">${vi}</div><div><div class="vt">${vt}</div><div class="vs">${vs}</div></div><div class="spacer"></div><div style="text-align:right"><div style="font-size:22px;font-weight:800">${Math.round(clean/(total||1)*100)}%</div><div class="muted" style="font-size:11px">clean</div></div>`;
+  const cd=[['c-blue',total,'Total IPs','&#127760;',0],['c-yellow',reported,'Reported','&#128221;',1],['c-orange',susp,'Suspicious &ge;25','&#9888;&#65039;',25],['c-red',mal,'Malicious &ge;75','&#128680;',75],['c-green',ctys,'Countries','&#127757;',-1]];
+  $('cards').innerHTML=cd.map(([c,n,l,ic,fv])=>`<div class="card ${c} ${fv>=0?'clickable':''}" ${fv>=0?`data-fv="${fv}"`:''}><span class="spark">${ic}</span><div class="n" data-to="${n}">0</div><div class="l">${l}</div></div>`).join('');
+  document.querySelectorAll('.card .n').forEach(el=>animateN(el,+el.dataset.to));
+  document.querySelectorAll('.card.clickable').forEach(c=>c.addEventListener('click',()=>{riskMin=+c.dataset.fv;$('search').value='';render();}));
+  const ins=[];ins.push(['&#128202;',`<b>${clean}</b> of <b>${total}</b> (<b>${Math.round(clean/(total||1)*100)}%</b>) clean.`]);
+  const worst=[...DATA].sort((a,b)=>b.AbuseScore-a.AbuseScore)[0];
+  if(worst&&worst.AbuseScore>0)ins.push(['&#128293;',`Highest: <b>${worst.IP}</b> &mdash; score <b>${worst.AbuseScore}</b>, ${worst.Reports} report(s).`]);
+  const cc={};DATA.forEach(d=>{if(d.Country)cc[d.Country]=(cc[d.Country]||0)+1;});const tc=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+  if(tc)ins.push(['&#127757;',`Most IPs in <b>${tc[0]}</b> (${tc[1]}).`]);
+  const ic={};DATA.forEach(d=>{if(d.ISP)ic[d.ISP]=(ic[d.ISP]||0)+1;});const ti=Object.entries(ic).sort((a,b)=>b[1]-a[1])[0];
+  if(ti)ins.push(['&#127970;',`Top network: <b>${ti[0]}</b> (${ti[1]}).`]);
+  ins.push(mal>0?['&#9940;',`<b>${mal}</b> at score &ge;75 &mdash; consider blocklisting.`]:susp>0?['&#128270;',`<b>${susp}</b> worth a manual check.`]:['&#9989;','No suspicious/malicious IPs.']);
+  $('insights').innerHTML=ins.map(([i,t])=>`<div class="insight"><span class="ii">${i}</span><span>${t}</span></div>`).join('');
+  const f=filtered();f.sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}return x<y?-sortDir:x>y?sortDir:0;});
+  const tb=document.querySelector('#tbl tbody');
+  tb.innerHTML=f.length?f.slice(0,2500).map(d=>`<tr class="${rClass(d.AbuseScore)}"><td class="ip" data-ip="${d.IP}">${d.IP}</td><td><span class="badge ${sClass(d.AbuseScore)}">${d.AbuseScore}</span></td><td>${d.Reports}</td><td>${d.Country?`<span class="fl">${d.Country}</span>`:'<span class="muted">-</span>'}</td><td class="isp" title="${d.ISP}">${d.ISP||'-'}</td><td class="muted">${(d.LastReported||'').replace('T',' ').replace(/\+.*/,'').replace(/\..*/,'')||'-'}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No IPs match this filter.</td></tr>`;
+  document.querySelectorAll('#tbl td.ip').forEach(td=>td.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(td.dataset.ip);toast('Copied '+td.dataset.ip);}));
+  $('count').textContent=`${f.length} of ${total}${f.length>2500?' (showing 2500)':''}`;
+  renderPie();renderDist();renderCountries(cc);
+  document.querySelectorAll('#chips .chip').forEach(ch=>ch.classList.toggle('active',+ch.dataset.v===riskMin));
+}
+function renderPie(){
+  const cats=[{lab:'Clean',col:'#3fb950',n:DATA.filter(d=>d.AbuseScore===0).length,fv:0},{lab:'Low (1-24)',col:'#e3b341',n:DATA.filter(d=>d.AbuseScore>0&&d.AbuseScore<25).length,fv:1},{lab:'Suspicious',col:'#f0883e',n:DATA.filter(d=>d.AbuseScore>=25&&d.AbuseScore<75).length,fv:25},{lab:'Malicious',col:'#f85149',n:DATA.filter(d=>d.AbuseScore>=75).length,fv:75}];
+  const total=DATA.length||1,R=82,r=50,cx=95,cy=95;let ang=-Math.PI/2,paths='';const pt=(a,rad)=>[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];
+  cats.forEach(c=>{if(c.n===0)return;const frac=c.n/total,end=ang+frac*2*Math.PI;
+    if(c.n===total){paths+=`<circle cx="${cx}" cy="${cy}" r="${(R+r)/2}" fill="none" stroke="${c.col}" stroke-width="${R-r}" data-fv="${c.fv}"/>`;}
+    else{const[a1,b1]=pt(ang,R),[a2,b2]=pt(end,R),[a3,b3]=pt(end,r),[a4,b4]=pt(ang,r),big=end-ang>Math.PI?1:0;
+      paths+=`<path d="M ${a1} ${b1} A ${R} ${R} 0 ${big} 1 ${a2} ${b2} L ${a3} ${b3} A ${r} ${r} 0 ${big} 0 ${a4} ${b4} Z" fill="${c.col}" stroke="#141a23" stroke-width="1.5" data-fv="${c.fv}"><title>${c.lab}: ${c.n}</title></path>`;}ang=end;});
+  $('pie').innerHTML=`<svg width="190" height="190" viewBox="0 0 190 190">${paths}<text class="pie-total" x="${cx}" y="${cy-1}" text-anchor="middle">${DATA.length}</text><text class="pie-center" x="${cx}" y="${cy+17}" text-anchor="middle">IPs</text></svg>`;
+  $('pieLegend').innerHTML=cats.map(c=>{const p=c.n/total*100;return `<div class="li" data-fv="${c.fv}"><span class="dot" style="background:${c.col}"></span><span class="lt">${c.lab}</span><span class="ln">${c.n} &middot; ${p<10&&p>0?p.toFixed(1):Math.round(p)}%</span></div>`;}).join('');
+  const setF=fv=>{riskMin=+fv;$('search').value='';render();};
+  document.querySelectorAll('#pie [data-fv]').forEach(e=>e.addEventListener('click',()=>setF(e.dataset.fv)));
+  document.querySelectorAll('#pieLegend .li').forEach(e=>e.addEventListener('click',()=>setF(e.dataset.fv)));
+}
+function renderDist(){const bk=[['0',d=>d.AbuseScore===0,0],['1-24',d=>d.AbuseScore>0&&d.AbuseScore<25,12],['25-49',d=>d.AbuseScore>=25&&d.AbuseScore<50,30],['50-74',d=>d.AbuseScore>=50&&d.AbuseScore<75,60],['75-99',d=>d.AbuseScore>=75&&d.AbuseScore<100,80],['100',d=>d.AbuseScore===100,100]];
+  const mx=Math.max(1,...bk.map(([_,fn])=>DATA.filter(fn).length));
+  $('dist').innerHTML=bk.map(([l,fn,mid])=>{const n=DATA.filter(fn).length;return `<div class="bar-row"><span class="lab">${l}</span><span class="track"><span class="fill" style="width:${n/mx*100}%;background:${fColor(mid)}"></span></span><span class="val">${n}</span></div>`;}).join('');}
+function renderCountries(cc){const top=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,10),mx=top.length?top[0][1]:1;
+  $('countries').innerHTML=top.map(([c,n])=>`<div class="country-row"><span class="fl">${c}</span><span style="display:flex;align-items:center;gap:9px"><span class="cb"><i style="width:${n/mx*100}%"></i></span><b>${n}</b></span></div>`).join('')||'<span class="muted">no data</span>';}
+function exportCSV(){const f=filtered(),head=['IP','AbuseScore','Reports','Country','ISP','LastReported'];
+  const csv=[head.join(',')].concat(f.map(d=>head.map(k=>{const v=(''+d[k]).replace(/"/g,'""');return /[",\n]/.test(v)?`"${v}"`:v;}).join(','))).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='abuseipdb-results.csv';a.click();toast(`Exported ${f.length} rows`);}
+let tT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);}
+function openDrawer(){$('drawer').classList.add('open');$('scrim').classList.add('open');}
+function closeDrawer(){$('drawer').classList.remove('open');$('scrim').classList.remove('open');}
+function newScan(){DATA=[];$('dash').classList.add('hidden');$('progress').classList.add('hidden');$('setup').classList.remove('hidden');$('newScanBtn').classList.add('hidden');$('exportBtn').classList.add('hidden');}
+
+/* events */
+$('runBtn').addEventListener('click',runScan);
+$('cancelBtn').addEventListener('click',()=>{CANCEL=true;log('Stopping...');});
+$('newScanBtn').addEventListener('click',newScan);
+$('exportBtn').addEventListener('click',exportCSV);
+$('helpBtn').addEventListener('click',openDrawer);
+$('drawerClose').addEventListener('click',closeDrawer);
+$('scrim').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+$('file').addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>loadCSV(parseCSV(r.result));r.readAsText(f);}});
+$('search').addEventListener('input',render);
+$('countrySel').addEventListener('change',render);
+document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=(k==='AbuseScore'||k==='Reports')?-1:1;}document.querySelectorAll('#tbl th .ar').forEach(a=>a.textContent='');th.querySelector('.ar').textContent=sortDir<0?'▼':'▲';render();}));
+// live estimate
+function est(){const {count}=targetCount($('ranges').value);const keys=$('keys').value.split(/\r?\n/).filter(k=>k.trim()&&!k.startsWith('#')).length;
+  $('estimate').textContent=count?`${count.toLocaleString()} IP(s)${keys?` across ${keys} key(s)`:''}`:'';}
+$('ranges').addEventListener('input',est);$('keys').addEventListener('input',est);
+</script>
+</body>
+</html>
